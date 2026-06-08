@@ -1,44 +1,68 @@
-import wave, sys, pyaudio, time
+import wave, pyaudio, time
 import whisper
 from ollama import chat
 import pyttsx3
-
+import speech_recognition as sr
+import webbrowser
 def listen():
     try:
-            CHUNK = 1024
-            FORMAT = pyaudio.paInt16
-            CHANNELS = 1
-            RATE = 16000
-            RECORD_SECONDS = 5
+            # CHUNK = 1024
+            # FORMAT = pyaudio.paInt16
+            # CHANNELS = 1
+            # RATE = 16000
+            # RECORD_SECONDS = 5
+            #
+            # with wave.open('output.wav', 'wb') as wf:
+            #     p = pyaudio.PyAudio()
+            #     wf.setnchannels(CHANNELS)
+            #     wf.setsampwidth(p.get_sample_size(FORMAT))
+            #     wf.setframerate(RATE)
+            #
+            #     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True)
+            #
+            #     print('Recording...')
+            #     for _ in range(0, RATE // CHUNK * RECORD_SECONDS):
+            #         wf.writeframes(stream.read(CHUNK))
+            #     print('Done')
+            #
+            #     stream.close()
+            #     p.terminate()
 
-            with wave.open('output.wav', 'wb') as wf:
-                p = pyaudio.PyAudio()
-                wf.setnchannels(CHANNELS)
-                wf.setsampwidth(p.get_sample_size(FORMAT))
-                wf.setframerate(RATE)
+            r = sr.Recognizer()
+            # recognize speech using Sphinx
+            try:
+                with sr.Microphone() as source:
+                    print("Listening for Jarvis..!")
+                    audio = r.listen(source)
+                word = (r.recognize_google(audio))
+                print(word)
+                if word.lower() == "jarvis" or "friday":
+                    speak("Jarvis Active..")
+                    with sr.Microphone() as source:
+                        print("<- Listening for command ->!")
+                        audio = r.listen(source)
+                        cmd = (r.recognize_google(audio))
 
-                stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True)
+                        processcmd(cmd)
+            except Exception as e:
+                print(f"Jarvis Error {e}")
+    except Exception as e:
+        print(f"Listening Error {e}")
 
-                print('Recording...')
-                for _ in range(0, RATE // CHUNK * RECORD_SECONDS):
-                    wf.writeframes(stream.read(CHUNK))
-                print('Done')
+def processcmd(cmd):
+    print(f"Processing command: {cmd}")
+    if "open google" or "google" in cmd.lower():
+        webbrowser.open("https://www.google.com")
+    elif "open youtube" or "youtube" in cmd.lower():
+        webbrowser.open("https://www.youtube.com")
+    elif "open github" or "github" in cmd.lower():
+        webbrowser.open("https://github.com/Riyaz510")
+    elif "open claude" or "claude" in cmd.lower():
+        webbrowser.open("https://claude.ai/new")
+    else:
+        response(cmd)
 
-                stream.close()
-                p.terminate()
-    except:
-        print("Error")
-
-model = whisper.load_model("turbo")
-def transcribe():
-    try:
-        result = model.transcribe("output.wav")
-        print(result["text"])
-        return (result["text"])
-    except:
-        print("Error in Transcribing")
-
-def response(text)->str:
+def response(text)->None:
     try:
         response = chat(model='qwen2.5:7b',
                         messages=[
@@ -48,23 +72,20 @@ def response(text)->str:
                              "content": text}
                         ])
         print(response.message.content)
-        return (response.message.content)
-    except:
-        print("Error in Response")
+        return response.message.content
+    except Exception as e:
+        print(f"Response Error {e}")
 
 def speak(text)-> None:
     try:
         engine = pyttsx3.init()
         engine.say(text)
         engine.runAndWait()
-    except:
-        print("Error in Speaking")
+    except Exception as e:
+        print(f"Speak Error {e}")
+
 
 if __name__ == "__main__":
     speak("Initializing JARVIS...")
     print("Initializing JARVIS...")
-    while True:
-        listen()
-        reply=response(transcribe())
-        speak(reply)
-        time.sleep(5)
+    listen()
