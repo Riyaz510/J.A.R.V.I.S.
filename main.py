@@ -2,6 +2,7 @@ import speech_recognition as sr
 import pyttsx3
 import webbrowser
 import requests
+from ollama import chat
 
 recognizer = sr.Recognizer()
 
@@ -54,12 +55,25 @@ def processcmd(cmd):
         except Exception as e:
             print("Error:", e)
             speak("Sorry, I could not get the driver information.")
+    else:
+        try:
+            response = chat(model='qwen2.5:7b',
+                            messages=[
+                                {"role": "system",
+                                 "content": "You are JARVIS, a virtual assistant like Alexa and Google Cloud. Be short and direct."},
+                                {"role": "user",
+                                 "content": cmd}
+                            ])
+            output=response.message.content
+            print(output)
+            speak(output)
+        except Exception as e:
+            print(f"Response Error {e}")
 
 if __name__ == '__main__':
     speak("Initializing JARVIS.....")
     while True:
         r = sr.Recognizer()
-        # recognize speech using Sphinx
         try:
             with sr.Microphone() as source:
                 print("Listening for Jarvis..!")
@@ -67,7 +81,7 @@ if __name__ == '__main__':
             word=(r.recognize_google(audio))
             print(word)
             if "jarvis" in word.lower() or "friday" in word.lower():
-                speak("Jarvis Active..")
+                speak(f"{word} Active..")
                 with sr.Microphone() as source:
                     print("<- Listening for command ->!")
                     audio = r.listen(source)
@@ -76,6 +90,6 @@ if __name__ == '__main__':
                     processcmd(cmd)
 
         except sr.UnknownValueError:
-            print("Sphinx could not understand audio")
+            print("Jarvis could not understand audio")
         except sr.RequestError as e:
-            print("Sphinx error; {0}".format(e))
+            print("Jarvis error; {0}".format(e))
