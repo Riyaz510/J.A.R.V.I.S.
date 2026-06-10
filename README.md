@@ -52,12 +52,6 @@ You will need to install the following Python packages:
    ```bash
    pip install -r requirements.txt
    ```
-   
-   Additionally, install `PyAudio` for microphone input:
-   ```bash
-   pip install pyaudio
-   ```
-   *(Note: See [Troubleshooting](#troubleshooting) if you run into issues installing PyAudio.)*
 
 4. **Setup Ollama:**
    - Install Ollama from [https://ollama.com/](https://ollama.com/)
@@ -97,6 +91,7 @@ Jarvis/
 ## Troubleshooting
 
 - **`PyAudio` installation errors:** On Windows, if `pip install pyaudio` fails, you might need to install it via a `.whl` file from Christoph Gohlke's repository or use `pipwin` (`pip install pipwin` then `pipwin install pyaudio`). On Linux, you may need `portaudio19-dev` (`sudo apt install portaudio19-dev python3-pyaudio`).
+   *(Note: See [Troubleshooting](#troubleshooting) if you run into issues installing PyAudio.)*
 - **Microphone not detected:** Ensure your default recording device is set correctly in your OS settings and that Python has microphone permissions.
 - **LLM taking too long or failing:** Ensure Ollama is running in the background and the `qwen2.5:7b` model has been downloaded successfully.
 - **Speech Recognition Unknown Value Error:** This means the Speech Recognition API couldn't understand the audio. Try speaking closer to the microphone or reducing background noise.
