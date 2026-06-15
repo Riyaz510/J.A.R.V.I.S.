@@ -82,13 +82,19 @@ if __name__ == '__main__':
             print(word)
             if "jarvis" in word.lower() or "friday" in word.lower():
                 speak(f"{word} Active..")
-                with sr.Microphone() as source:
-                    print("<- Listening for command ->!")
-                    audio = r.listen(source)
-                    cmd=(r.recognize_google(audio))
-
-                    processcmd(cmd)
-
+                while True:
+                    try:
+                        with sr.Microphone() as source:
+                            print("<- Listening for command ->!")
+                            audio = r.listen(source)
+                            cmd=(r.recognize_google(audio))
+                            if "exit" in cmd.lower():
+                                speak("Jarvis says Adios..!")
+                                break
+                            else:
+                                processcmd(cmd)
+                    except :
+                        print("Error in understanding the command,say again")
         except sr.UnknownValueError:
             print("Jarvis could not understand audio")
         except sr.RequestError as e:
