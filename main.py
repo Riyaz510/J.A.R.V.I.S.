@@ -3,13 +3,82 @@ import pyttsx3
 import webbrowser
 import requests
 from ollama import chat
-
+import json
+import time
 recognizer = sr.Recognizer()
 
 def speak(text):
     engine = pyttsx3.init()
     engine.say(text)
     engine.runAndWait()
+
+
+def f1api():
+    try:
+        speak("Tell me the driver number")
+        with sr.Microphone() as source:
+            print("-- Waiting for Driver Number --")
+            audio = recognizer.listen(source)
+
+        num = recognizer.recognize_google(audio)
+
+        print("Driver Number:", num)
+
+        url = f"https://api.openf1.org/v1/drivers?driver_number={num}&session_key=9158"
+
+        response = requests.get(url)
+        data = response.json()
+
+        if not data:
+            speak("Driver not found")
+            return
+
+        driver_number = data[0]["driver_number"]
+        full_name = data[0]["full_name"]
+        team_name = data[0]["team_name"]
+
+        speak(
+            f"Driver Number {driver_number}. "
+            f"Full Name {full_name}. "
+            f"Team Name {team_name}."
+        )
+
+    except Exception as e:
+        print("Error:", e)
+        speak("Sorry, I could not get the driver information.")
+
+def jokesapi():
+    try:
+        response = requests.get("https://v2.jokeapi.dev/joke/Any?blacklistFlags=nsfw,religious,political,racist,sexist,explicit")
+        print(response.json())
+        setup = response.json()["setup"]
+        delivery = response.json()["delivery"]
+        speak(setup)
+        time.sleep(3)
+        speak(delivery)
+    except requests.exceptions.ConnectionError:
+        print("Connection Error")
+history=[]
+def airesponse(cmd):
+    try:
+        history.append({"role": "user",
+                        "content": cmd})
+        response = chat(model='qwen2.5:7b',
+                        messages=[{"role": "system",
+                                    "content": """You are JARVIS. You are highly intelligent, slightly sarcastic, and dry. 
+                                                    Occasionally make clever observations. 
+                                                    Never be rude, just witty.
+                                                    Call the user 'Sir'. 
+                                                    Keep replies concise.
+                                                """}] + history)
+        reply = response.message.content
+        history.append({"role": "assistant","content": reply})
+        print(reply)
+        speak(reply)
+        with open("data.json", "w") as file:
+            json.dump(history, file, indent=4)
+    except Exception as e:
+        print(f"Error in AI response: {e}")
 
 def processcmd(cmd):
     print(f"Processing command: {cmd}")
@@ -22,53 +91,11 @@ def processcmd(cmd):
     elif "claude" in cmd.lower():
         webbrowser.open("https://claude.ai/new")
     elif "f1" in cmd.lower():
-        try:
-            speak("Tell me the driver number")
-
-            with sr.Microphone() as source:
-                print("-- Waiting for Driver Number --")
-                audio = recognizer.listen(source)
-
-            num = recognizer.recognize_google(audio)
-
-            print("Driver Number:", num)
-
-            url = f"https://api.openf1.org/v1/drivers?driver_number={num}&session_key=9158"
-
-            response = requests.get(url)
-            data = response.json()
-
-            if not data:
-                speak("Driver not found")
-                return
-
-            driver_number = data[0]["driver_number"]
-            full_name = data[0]["full_name"]
-            team_name = data[0]["team_name"]
-
-            speak(
-                f"Driver Number {driver_number}. "
-                f"Full Name {full_name}. "
-                f"Team Name {team_name}."
-            )
-
-        except Exception as e:
-            print("Error:", e)
-            speak("Sorry, I could not get the driver information.")
+        f1api()
+    elif "jokes" in cmd.lower():
+        jokesapi()
     else:
-        try:
-            response = chat(model='qwen2.5:7b',
-                            messages=[
-                                {"role": "system",
-                                 "content": "You are JARVIS, a virtual assistant like Alexa and Google Cloud. Be short and direct."},
-                                {"role": "user",
-                                 "content": cmd}
-                            ])
-            output=response.message.content
-            print(output)
-            speak(output)
-        except Exception as e:
-            print(f"Response Error {e}")
+        airesponse(cmd)
 
 if __name__ == '__main__':
     speak("Initializing JARVIS.....")
